@@ -1,0 +1,33 @@
+{
+  "name": "terranova_bot",
+  "version": "2.0.0",
+  "description": "Bot de discord para TerraNova",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon -e js --watch src src/index.js",
+    "start": "npm run load && node .",
+    "load": "node ./src/deploy-commands.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TecnoRed20/TerraNova_Bot.git"
+  },
+  "keywords": [
+    "BotDiscord",
+    "TerraNova"
+  ],
+  "author": "TecnoRed",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TecnoRed20/TerraNova_Bot/issues"
+  },
+  "homepage": "https://github.com/TecnoRed20/TerraNova_Bot#readme",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "mongoose": "^8.2.1"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

