@@ -4,7 +4,7 @@ Node Version: v20.13.1
 ### Uso
 - Descargar el repositorio
 - Ejecutar `npm install`
-- Configurar las el .env
+- Configurar las variables de entorno en el .env
   - DATABASE_USER
   - DATABASE_PASS
   - DATABASE_IP
