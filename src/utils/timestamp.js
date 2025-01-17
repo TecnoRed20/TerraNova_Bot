@@ -1,4 +1,4 @@
-export default function eLog(message, arg = "") {
+export default function timestamp() {
   const padZero = (num) => (num < 10 ? `0${num}` : num);
 
   const now = new Date();
@@ -9,5 +9,5 @@ export default function eLog(message, arg = "") {
   const minutes = padZero(now.getMinutes());
   const seconds = padZero(now.getSeconds());
 
-  console.log(`[${day}/${month}/${year} - ${hours}:${minutes}:${seconds}] ${message}`, arg);
+  return `[${day}/${month}/${year} - ${hours}:${minutes}:${seconds}]`;
 };

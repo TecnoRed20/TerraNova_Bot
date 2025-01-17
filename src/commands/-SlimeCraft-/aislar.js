@@ -6,7 +6,7 @@ import {
   ChannelType,
   GuildMessageManager,
 } from "discord.js";
-import eLog from "../../eLog";
+import eLog from "../../utils/eLog";
 
 module.exports = {
   data: new SlashCommandBuilder()

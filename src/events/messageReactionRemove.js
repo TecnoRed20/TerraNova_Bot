@@ -1,7 +1,7 @@
 import { Events, User, PartialUser, MessageReaction, PartialMessageReaction } from 'discord.js'; 
 import autoRoleReaction from '../models/autoRoleReaction';
 import autoRoleGuilds from '../models/autoRoleGuilds'
-import eLog from '../eLog';
+import eLog from '../utils/eLog';
 
 module.exports = {
 	name: Events.MessageReactionRemove,

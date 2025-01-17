@@ -1,13 +1,14 @@
 {
   "name": "terranova_bot",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Bot de discord para TerraNova",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon --exec babel-node src/index.js",
     "build": "babel src --out-dir build",
     "start": "node build/deploy-commands.js && node build/index.js",
-    "load": "babel-node src/deploy-commands.js"
+    "load": "babel-node src/deploy-commands.js",
+    "public": "npm run build && systemctl restart terranova.service"
   },
   "repository": {
     "type": "git",
@@ -34,6 +35,7 @@
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
     "mongoose": "^8.5.2",
+    "puppeteer": "^23.3.0",
     "regenerator-runtime": "^0.14.1"
   }
 }

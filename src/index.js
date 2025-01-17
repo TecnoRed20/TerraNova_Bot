@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import connectDB from "./database"
-import eLog from "./eLog";
+import connectDB from "./utils/database"
+import eLog from "./utils/eLog";
 import fs from "node:fs";
 import path from "node:path";
 

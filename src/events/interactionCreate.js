@@ -1,5 +1,5 @@
 import { Events, BaseInteraction } from 'discord.js';
-import eLog from '../eLog';
+import eLog from '../utils/eLog';
 
 module.exports = {
 	name: Events.InteractionCreate,

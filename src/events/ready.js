@@ -1,41 +1,52 @@
 import { Events, ActivityType } from "discord.js";
-import eLog from "../eLog";
+import eLog from "../utils/eLog";
+import startTracking from '../utils/mailPackageTracker'
+import MailPackageTracker from "../models/mailPackageTracker";
 
 module.exports = {
   name: Events.ClientReady,
   once: true,
-  async execute(interaction) {
+  async execute(client) {
     setInterval(async () => {
       const options = [
         {
-          type: ActivityType.Watching,
-          text: `${interaction.guilds?.cache?.size} servidor/es`,
+          type: ActivityType.Custom,
+          text: `Trabajando para ${client.guilds?.cache?.size} ${client.guilds?.cache?.size == 1 ? 'servidor' : 'servidores'}`,
           status: "online",
         },
         {
-          type: ActivityType.Listening,
-          text: "comandos",
+          type: ActivityType.Custom,
+          text: "Esperando ordenes",
           status: "idle",
         },
         {
-          type: ActivityType.Playing,
-          text: "Discord.js",
+          type: ActivityType.Custom,
+          text: 'Jugando a "..."',
           status: "dnd",
         },
       ];
 
       const option = Math.floor(Math.random() * options.length);
 
-      interaction.user.setPresence({
+      client.user.setPresence({
         activities: [{
           name: options[option].text,
           type: options[option].type,
         }],
         status: options[option].status,
       });
-    }, 15 * 1000);
-    eLog(`Estoy listo! Conectado como ${interaction.user.tag}`);
+    }, 60 * 1000);
+    eLog(`Estoy listo! Conectado como ${client.user.tag}`);
 
     // Cargar Roles Temporales desde BBDD
+
+    // Cargar MPT (Mail Package Tracker)
+    eLog("[MPT] Cargando...")
+    const mptsSaved = await MailPackageTracker.find({ expiredAt: null });
+    mptsSaved.forEach(mptSaved => {
+      startTracking(client, mptSaved.packageId)
+      eLog(`[MPT] Paquete ${mptSaved.packageId} cargado.`)
+    })
+    eLog("[MPT] Finalizado")
   },
 };

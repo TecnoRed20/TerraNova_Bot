@@ -1,6 +1,6 @@
 # TerraNova Bot
 
-Node Version: v20.13.1
+Node Version: v20.11.1
 ### Uso
 - Descargar el repositorio
 - Ejecutar `npm install`
