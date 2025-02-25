@@ -1,0 +1,41 @@
+{
+  "name": "terranova_bot",
+  "version": "3.1.0",
+  "description": "Bot de discord para TerraNova",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon --exec babel-node src/index.js",
+    "build": "babel src --out-dir build",
+    "start": "node build/deploy-commands.js && node build/index.js",
+    "load": "babel-node src/deploy-commands.js",
+    "public": "npm run build && systemctl restart terranova.service"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TecnoRed20/TerraNova_Bot.git"
+  },
+  "keywords": [
+    "BotDiscord",
+    "TerraNova"
+  ],
+  "author": "TecnoRed",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TecnoRed20/TerraNova_Bot/issues"
+  },
+  "homepage": "https://github.com/TecnoRed20/TerraNova_Bot#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.24.8",
+    "@babel/core": "^7.25.2",
+    "@babel/node": "^7.25.0",
+    "@babel/preset-env": "^7.25.3",
+    "nodemon": "^3.1.4"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "mongoose": "^8.5.2",
+    "puppeteer": "^23.3.0",
+    "regenerator-runtime": "^0.14.1"
+  }
+}
