@@ -23,7 +23,8 @@ module.exports = {
     if(user.bot) return;
     const guild = reaction.message.guild;
     const channelId = reaction.message.channelId;
-    const reactChannel = await AutoRoleChannel.findOne({guildId: guild.id, channelId: channelId });
+    const messageId = reaction.message.id;
+    const reactChannel = await AutoRoleChannel.findOne({guildId: guild.id, channelId, messageId });
     if(!reactChannel) return;
     const channelRef = reactChannel._id;
     

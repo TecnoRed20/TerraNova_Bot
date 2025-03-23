@@ -212,7 +212,7 @@ module.exports = {
         if(activeChannel.messageId) {
           const message = await channel.messages.cache.find(msg => msg.id === activeChannel.messageId);
           if(message)
-            message.delete()
+            await message.delete()
         }
     
         const allReaction = await AutoRoleReaction.find({channelRef: activeChannel._id})
