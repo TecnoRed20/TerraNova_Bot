@@ -11,6 +11,16 @@ module.exports = {
       start.setName('start')
       .setDescription('Inicia el seguimiento de un paquete')
       .addStringOption(opcion =>
+        opcion.setName('company')
+        .setDescription('Compañia de reparto')
+        .setRequired(true)
+        .addChoices(
+          { name: 'Correos', value: 'correos' },
+          { name: 'EcoScooting', value: 'ecoscooting' },
+          { name: 'CTT Express', value: 'cttexpress' },
+        )
+      )
+      .addStringOption(opcion =>
         opcion.setName('package')
         .setDescription('Codigo del Paquete')
         .setRequired(true)
@@ -34,11 +44,11 @@ module.exports = {
     const userId = user.id;
     const subCommand = options.getSubcommand();
     const packageId = options.getString('package');
-
-    
+    const companyId = options.getString('company')
 
     if (subCommand === "start") {
       if(await MailPackageTracker.findOne({
+        companyId,
         packageId,
         expiredAt: null
       }) !== null) {
@@ -49,11 +59,12 @@ module.exports = {
       }
 
       await new MailPackageTracker({
+        companyId,
         packageId,
         userId
       }).save();
 
-      startTracking(client, packageId)
+      startTracking(client, packageId, companyId)
       return await interaction.reply({
         content: `Se ha añadido el paquete: ${packageId} al seguimiento.`,
         ephemeral: true,

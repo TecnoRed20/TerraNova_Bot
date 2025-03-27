@@ -44,7 +44,7 @@ module.exports = {
     eLog("[MPT] Cargando...")
     const mptsSaved = await MailPackageTracker.find({ expiredAt: null });
     mptsSaved.forEach(mptSaved => {
-      startTracking(client, mptSaved.packageId)
+      startTracking(client, mptSaved.packageId, (mptSaved.companyId ?? "correos"))
       eLog(`[MPT] Paquete ${mptSaved.packageId} cargado.`)
     })
     eLog("[MPT] Finalizado")

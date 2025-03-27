@@ -3,6 +3,11 @@ import MailPackageTracker from '../models/mailPackageTracker'
 import eLog from './eLog';
 import timestamp from './timestamp';
 
+const convertirAFechaHora = s => { 
+  const [d, m, y, h, mi, sec] = s.split(/[/ :]/).map(Number); 
+  return new Date(y, m - 1, d, h, mi, sec); 
+};
+
 async function mailPackageTracker(PackageCode) {
   const UrlBase = 'https://www.correos.es/es/es/herramientas/localizador/envios/detalle?tracking-number=';
   const URL = UrlBase + PackageCode;
@@ -47,7 +52,7 @@ async function mailPackageTracker(PackageCode) {
   }
 };
 
-async function run(client, packageCode, intervalId) {
+async function runCorreos_Old(client, packageCode, intervalId) {
   const trackingInfo = await mailPackageTracker(packageCode)
   // console.log('Información del seguimiento:', trackingInfo);
   // En Entrega
@@ -73,10 +78,96 @@ async function run(client, packageCode, intervalId) {
   }
 }
 
-export default async function startTracking(client, packageCode) {
-  const intervalId = setInterval(() => run(client, packageCode, intervalId), 5 * 60 * 1000); // Repite cada 5 minutos
+async function runCorreos(packageCode, intervalId) {
+  const URL = `https://api1.correos.es/digital-services/searchengines/api/v1/?text=${packageCode}&searchType=envio`;
+
+  try {
+    const response = await fetch(URL,
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+        }
+      }
+    );
+
+    if(!response.ok) {
+      eLog(`[MPT] Error en la petición del paquete ${packageCode}: ${response.status} - ${response.statusText}`);
+      return null;
+    }
+
+    const trackingInfo = await response.json();
+    if (!trackingInfo.shipment || trackingInfo.shipment.length === 0) {
+      eLog(`[MPT] No se encontraron envíos para el código ${packageCode}.`);
+      return null;
+    }
+
+    const events = trackingInfo.shipment[0].events || [];
+    const dataDelivery = events.find(event => event.desPhase === "EN ENTREGA");
+
+    if(dataDelivery) {
+      const dateDelivery = dataDelivery.eventDate + " " + dataDelivery.eventTime;
+      // Detener el intervalo
+      clearInterval(intervalId);
+
+      eLog(`[MPT] Paquete ${packageCode} esta en entrega el ${dateDelivery}`)
+
+      const mptUpdate = await MailPackageTracker.findOneAndUpdate({packageId: packageCode, expiredAt: null}, {expiredAt: new Date(), intervalId: null},  { new: true })
+
+      return {
+        userId: mptUpdate.userId,
+        message: `<@${mptUpdate.userId}>\nSu [paquete](https://www.correos.es/es/es/herramientas/localizador/envios/detalle?tracking-number=${packageCode}) ya esta en reparto <t:${Math.floor(convertirAFechaHora(dateDelivery).getTime() / 1000)}:R>`
+      }
+    }
+    return null;
+  }
+  catch (error) {
+    eLog(`[MPT] Error al buscar el paquete: ${error}`)
+    return null;
+  }
+}
+
+async function runEcoScooting(packageCode, intervalId) {
+  // TODO: Analisis pendiente
+}
+
+async function runCTTExpress(packageCode, intervalId) {
+  // TODO: Analisis pendiente
+}
+
+async function run(client, packageCode, companyId, intervalId) {
+  let result = null;
+  switch (companyId) {
+    case "correos":
+      result = await runCorreos(packageCode, intervalId);
+      break;
+
+    case "ecoscooting":
+      result = await runEcoScooting(packageCode, intervalId);
+      break;
+
+    case "cttexpress":
+      result = await runCTTExpress(packageCode, intervalId);
+      break;
+
+    default:
+      result = null;
+      break;
+  }
+
+  if(result != null && client) {
+    const userId = result.userId;
+    const user = await client.users.fetch(userId);
+    const mdChannel = await user.createDM(true);
+    mdChannel.send(result.message)
+  }
+
+}
+
+export default async function startTracking(client, packageCode, companyId) {
+  const intervalId = setInterval(() => run(client, packageCode, companyId, intervalId), 10 * 60 * 1000); // Repite cada 5 minutos
 
   await MailPackageTracker.updateOne({packageId: packageCode, expiredAt: null}, {intervalId: String(intervalId)})
-  run(client, packageCode, intervalId); // Llama inicialmente para empezar
+  run(client, packageCode, companyId, intervalId); // Llama inicialmente para empezar
 }
 
