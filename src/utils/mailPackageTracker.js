@@ -128,7 +128,92 @@ async function runCorreos(packageCode, intervalId) {
 }
 
 async function runEcoScooting(packageCode, intervalId) {
-  // TODO: Analisis pendiente
+  function encodeJsonToUrlEncoded(json) {
+    // Convertir el objeto en una cadena JSON y luego codificarlo para su uso en el body
+    const jsonString = JSON.stringify(json); // Convertimos el objeto en una cadena JSON
+    return encodeURIComponent(jsonString); // Codificamos la cadena JSON para uso en URL
+  }
+
+  function parseDate (s) { 
+    const newDate = new Date(s.split(" UTC+1")[0].replace(" ", "T")+"Z");
+    const offset = parseInt(s.split("UTC")[1]) * 3600000;
+
+    return new Date(newDate.getTime() - offset);
+  }
+
+  const jsonBody = {
+    "logistics_interface": {
+      "mailNo": packageCode,
+      "locale": "es_ES",
+      "role": "endUser"
+    },
+    "msg_type": "CN_OVERSEA_LOGISTICS_INQUIRY_TRACKING",
+    "logistic_provider_id": "DISTRIBUTOR_30250031",
+    "data_digest": "suibianxie",
+    "to_code": "CNL_EU"
+  };
+
+  // Codificar solo el contenido de logistics_interface
+  const encodedLogisticsInterface = encodeJsonToUrlEncoded(jsonBody.logistics_interface);
+
+  // Ahora, reemplazamos el campo logistics_interface por el codificado
+  const bodyParams = {
+    ...jsonBody,
+    logistics_interface: encodedLogisticsInterface // Usamos la cadena codificada
+  };
+
+  // Convertir el cuerpo completo a formato URL codificado
+  const urlEncodedBody = Object.entries(bodyParams)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+
+  const url = "https://de-link.cainiao.com/gateway/link.do";
+  const options = {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: urlEncodedBody // Aquí se usa la cadena URL codificada
+  };
+
+  try {
+    const response = await fetch(url, options);
+    
+    if(!response.ok) {
+      eLog(`[MPT] Error en la petición del paquete ${packageCode}: ${response.status} - ${response.statusText}`);
+      return null;
+    }
+
+    const trackingInfo = await response.json();
+
+    if (!trackingInfo.statuses || trackingInfo.statuses.length === 0 ) {
+      eLog(`[MPT] No se encontraron envíos para el código ${packageCode}.`);
+      return null;
+    }
+
+    const statuses = trackingInfo.statuses || [];
+    const dataDelivery = statuses.find(status => status.statusGroup === "delivering");
+
+    if(dataDelivery) {
+      const dateDelivery = parseDate(dataDelivery.datetime);
+      // Detener el intervalo
+      clearInterval(intervalId);
+
+      eLog(`[MPT] Paquete ${packageCode} esta en entrega el ${dateDelivery.toLocaleString("es-ES", { hour12: false }).replace(",", "")}`)
+
+      const mptUpdate = await MailPackageTracker.findOneAndUpdate({packageId: packageCode, expiredAt: null}, {expiredAt: new Date(), intervalId: null},  { new: true })
+
+      return {
+        userId: mptUpdate.userId,
+        message: `<@${mptUpdate.userId}>\nSu [paquete](https://www.ecoscooting.com/tracking/${packageCode}) ya esta en reparto <t:${Math.floor(dateDelivery.getTime() / 1000)}:R>`
+      }
+    }
+
+    return null;
+  } 
+  catch (error) {
+    console.error('Error:', error);
+  }
 }
 
 async function runCTTExpress(packageCode, intervalId) {
