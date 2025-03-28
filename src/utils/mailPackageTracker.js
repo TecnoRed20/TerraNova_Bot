@@ -217,7 +217,52 @@ async function runEcoScooting(packageCode, intervalId) {
 }
 
 async function runCTTExpress(packageCode, intervalId) {
-  // TODO: Analisis pendiente
+  const URL = `https://wct.cttexpress.com/p_track_redis.php?sc=${packageCode}`
+
+  try {
+    const response = await fetch(URL,
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+        }
+      }
+    );
+
+    if(!response.ok) {
+      eLog(`[MPT] Error en la petición del paquete ${packageCode}: ${response.status} - ${response.statusText}`);
+      return null;
+    }
+
+    const trackingInfo = await response.json();
+    if (!trackingInfo.data || !trackingInfo.data.shipping_history || !trackingInfo.data.shipping_history.events || trackingInfo.data.shipping_history.events.length === 0) {
+      eLog(`[MPT] No se encontraron envíos para el código ${packageCode}.`);
+      return null;
+    }
+
+    const events = trackingInfo.data.shipping_history.events || [];
+    const dataDelivery = events.find(event => event.code === "1500"); // Entrega hoy
+
+    if(dataDelivery) {
+      const dateDelivery = new Date(dataDelivery.detail.item_event_datetime);
+      // Detener el intervalo
+      clearInterval(intervalId);
+
+      eLog(`[MPT] Paquete ${packageCode} esta en entrega el ${dateDelivery.toLocaleString("es-ES", { hour12: false }).replace(",", "")}`)
+
+      const mptUpdate = await MailPackageTracker.findOneAndUpdate({packageId: packageCode, expiredAt: null}, {expiredAt: new Date(), intervalId: null},  { new: true })
+
+      return {
+        userId: mptUpdate.userId,
+        message: `<@${mptUpdate.userId}>\nSu [paquete](https://www.cttexpress.com/localizador-de-envios/?sc=${packageCode}) ya esta en reparto <t:${Math.floor(dateDelivery.getTime() / 1000)}:R>`
+      }
+    }
+    return null;
+  }
+  catch (error) {
+    eLog(`[MPT] Error al buscar el paquete: ${error}`)
+    return null;
+  }
 }
 
 async function run(client, packageCode, companyId, intervalId) {
