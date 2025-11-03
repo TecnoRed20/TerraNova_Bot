@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, CommandInteraction, disableValidators } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, CommandInteraction, MessageFlags, disableValidators } from 'discord.js';
 import AutoRoleChannel from '../../models/autoRoleChannel';
 import AutoRoleReaction from '../../models/autoRoleReaction';
 import eLog from '../../utils/eLog';
@@ -75,7 +75,7 @@ module.exports = {
         if(!allChannel || allChannel.length == 0 ) {
           return interaction.reply({
             content: `No se encontró información para este servidor.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -111,7 +111,7 @@ module.exports = {
 
         return interaction.reply({
           embeds: [embedActiveChannel, embedDisableChannels],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       else if(subCommand == 'set') {
@@ -139,13 +139,13 @@ module.exports = {
 
         return interaction.reply({
           content: `Se establecio el canal: ${channel}`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       else {
         return interaction.reply({
           content: `Comando no soportado`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -156,7 +156,7 @@ module.exports = {
         if(!activeChannel) {
           return interaction.reply({
             content: `No se encontró un canal activo para este servidor.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
         const activeChannelRef = activeChannel._id;
@@ -189,7 +189,7 @@ module.exports = {
 
         return interaction.reply({
           embeds: [embed],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       else if(subCommand == 'print') {
@@ -197,7 +197,7 @@ module.exports = {
         if(!activeChannel) {
           return interaction.reply({
             content: `No se encontró un canal activo para este servidor.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -205,7 +205,7 @@ module.exports = {
         if(!channel) {
           return interaction.reply({
             content: `No se encontro el canal.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -253,7 +253,7 @@ module.exports = {
 
         return interaction.reply({
           content: 'Operación realizada',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       else if(subCommand == 'add') {
@@ -264,7 +264,7 @@ module.exports = {
         if(!activeChannel) {
           return interaction.reply({
             content: `No se encontró un canal activo para este servidor.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
         const channelRef = activeChannel._id;
@@ -273,7 +273,7 @@ module.exports = {
         if(existReaction) {
           return interaction.reply({
             content: `Ya existe una reacción para este rol en el canal activo.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
         else {
@@ -285,7 +285,7 @@ module.exports = {
 
           return interaction.reply({
             content: `Se añadio el emoji ${emoji} para el rol ${role} en el canal activo <#${activeChannel.channelId}>`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       }
@@ -296,7 +296,7 @@ module.exports = {
         if(!activeChannel) {
           return interaction.reply({
             content: `No se encontró un canal activo para este servidor.`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
         const channelRef = activeChannel._id;
@@ -305,26 +305,26 @@ module.exports = {
         if (reaction) {
           return interaction.reply({
             content: `Se eliminó la reacción vinculada al rol ${role}`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         } else {
           return interaction.reply({
             content: `No se encontró la reacción vinculada al rol ${role}`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       }
       else {
         return interaction.reply({
           content: `Comando no soportado`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
     else {
       return interaction.reply({
         content: `Comando recibido :eyes:`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
