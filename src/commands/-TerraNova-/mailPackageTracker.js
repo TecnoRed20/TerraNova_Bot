@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
 import MailPackageTracker from '../../models/mailPackageTracker'
-import startTracking from '../../utils/mailPackageTracker';
+import startTracking from '../../modules/mailPackageTracker';
 import eLog from '../../utils/eLog';
 
 module.exports = {

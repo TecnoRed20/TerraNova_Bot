@@ -1,5 +1,5 @@
 import MailPackageTracker from '../models/mailPackageTracker'
-import eLog from './eLog';
+import eLog from '../utils/eLog';
 
 async function runCorreos(packageCode, intervalId) {
   const convertirAFechaHora = s => { 

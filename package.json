@@ -8,7 +8,7 @@
     "build": "babel src --out-dir build",
     "start": "node build/deploy-commands.js && node build/index.js",
     "load": "babel-node src/deploy-commands.js",
-    "public": "npm run build && systemctl restart terranova.service"
+    "public": "npm run build && npm run load && systemctl restart terranova.service"
   },
   "repository": {
     "type": "git",

@@ -1,7 +1,8 @@
 import { Events, ActivityType } from "discord.js";
 import eLog from "../utils/eLog";
-import startTracking from '../utils/mailPackageTracker'
+import startTracking from '../modules/mailPackageTracker'
 import MailPackageTracker from "../models/mailPackageTracker";
+import iniciarMonitoreoPrecios from '../modules/discordPriceMonitor';
 
 module.exports = {
   name: Events.ClientReady,
@@ -48,5 +49,10 @@ module.exports = {
       eLog(`[MPT] Paquete ${mptSaved.packageId} cargado.`)
     })
     eLog("[MPT] Finalizado")
+
+    // Iniciar Discord Price Monitor
+    eLog("[DPM] Iniciando...")
+    iniciarMonitoreoPrecios(client);
+    eLog("[DPM] Finalizado")
   },
 };
