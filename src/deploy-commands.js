@@ -2,43 +2,62 @@ import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
 import { REST, Routes } from 'discord.js';
-import eLog from './utils/eLog';
 
 const token = process.env.TOKEN_BOT;
 const clientId = process.env.CLIENT_ID;
 const guildId = process.env.GUILD_ID;
 
+const GUILDS = {
+	TerraNova: guildId,
+	PandaCommunity: '877590914674094121',
+	SlimeCraft: '778926791339278357',
+	MomentoRelax: '612740202061889759',
+};
+
+// Carpeta privada -> guild donde deben cargarse sus comandos.
+const PRIVATE_FOLDER_TO_GUILD = {
+	'-PandaCommunity-': GUILDS.PandaCommunity,
+	'-SlimeCraft-': GUILDS.SlimeCraft,
+	'-MomentoRelax-': GUILDS.MomentoRelax,
+};
+
 const commandsPublic = [];
-const commandsPrivateTN = [];
-const commandsPrivatePC = [];
-const commandsPrivateSC = [];
+const privateCommandsByGuild = {
+	[GUILDS.TerraNova]: [],
+	[GUILDS.PandaCommunity]: [],
+	[GUILDS.SlimeCraft]: [],
+	[GUILDS.MomentoRelax]: [],
+};
 
 // Grab all the command files from the commands directory you created earlier
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
-	// Grab all the command files from the commands directory you created earlier
+	// Grab all the command files from each commands folder.
 	const commandsPath = path.join(foldersPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-	// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
+	const isPrivateFolder = folder.startsWith('-');
+	const guildForFolder = PRIVATE_FOLDER_TO_GUILD[folder];
+
+	// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment.
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 		if ('data' in command && 'execute' in command) {
-			// Inserto todo en TerraNova
-			commandsPrivateTN.push(command.data.toJSON());
+			const commandData = command.data.toJSON();
 
-			if (folder === "-SlimeCraft-") {
-				commandsPrivateSC.push(command.data.toJSON());
+			if (!isPrivateFolder) {
+				commandsPublic.push(commandData);
+				continue;
 			}
-			else if (folder === "-PandaCommunity-") {
-				commandsPrivatePC.push(command.data.toJSON());
-			}
-			else if (!folder.startsWith("-")) {
-				commandsPublic.push(command.data.toJSON());
-				// Si es un comando publico lo borro de TerraNova
-				commandsPrivateTN.pop()
+
+			// Todos los comandos privados viven tambien en TerraNova.
+			privateCommandsByGuild[GUILDS.TerraNova].push(commandData);
+
+			// Y, si aplica, tambien se cargan en su guild dedicada.
+			if (guildForFolder) {
+				privateCommandsByGuild[guildForFolder].push(commandData);
 			}
 		} else {
 			console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
@@ -49,26 +68,33 @@ for (const folder of commandFolders) {
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(token);
 
+const deleteGuildCommands = async (guildIdToDelete, guildName) => {
+	await rest.put(Routes.applicationGuildCommands(clientId, guildIdToDelete), { body: [] });
+	console.log(`Successfully deleted all guild commands (${guildName}).`);
+};
+
+const deployGuildCommands = async (guildIdToDeploy, guildName, commands) => {
+	console.log(`Started refreshing ${commands.length} application (/) private commands (${guildName}).`);
+	const data = await rest.put(
+		Routes.applicationGuildCommands(clientId, guildIdToDeploy),
+		{ body: commands },
+	);
+	console.log(`Successfully reloaded ${data.length} application (/) private commands (${guildName}).`);
+};
+
 // and deploy your commands!
 (async () => {
 	try {
 
 		// Delete al Slash Command
 		if (false) {
-			// TerraNova
-			await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: [] })
-			console.log('Successfully deleted all guild commands (TerraNova).')
-
-			// PandaCommunity
-			await rest.put(Routes.applicationGuildCommands(clientId, "877590914674094121"), { body: [] })
-			console.log('Successfully deleted all guild commands (PandaCommunity).')
-
-			// SlimeCraft
-			await rest.put(Routes.applicationGuildCommands(clientId, "778926791339278357"), { body: [] })
-			console.log('Successfully deleted all guild commands (SlimeCraft).')
+			await deleteGuildCommands(GUILDS.TerraNova, 'TerraNova');
+			await deleteGuildCommands(GUILDS.PandaCommunity, 'PandaCommunity');
+			await deleteGuildCommands(GUILDS.SlimeCraft, 'SlimeCraft');
+			await deleteGuildCommands(GUILDS.MomentoRelax, 'MomentoRelax');
 
 			// Publicos
-			await rest.put(Routes.applicationCommands(clientId), { body: [] })
+			await rest.put(Routes.applicationCommands(clientId), { body: [] });
 			console.log('Successfully deleted all public commands.')
 		}
 		else {
@@ -79,21 +105,23 @@ const rest = new REST().setToken(token);
 			);
 			console.log(`Successfully reloaded ${dataPublic.length} application (/) public commands.`);
 
-			// Comandos para TerraNova
-			console.log(`Started refreshing ${commandsPrivateTN.length} application (/) private commands (TerraNova).`);
-			const dataPrivateTN = await rest.put(
-				Routes.applicationGuildCommands(clientId, guildId), // Cargar comandos privados
-				{ body: commandsPrivateTN },
+			await deployGuildCommands(
+				GUILDS.TerraNova,
+				'TerraNova',
+				privateCommandsByGuild[GUILDS.TerraNova],
 			);
-			console.log(`Successfully reloaded ${dataPrivateTN.length} application (/) private commands (TerraNova).`);
 
-			// Comandos para SlimeCraft
-			console.log(`Started refreshing ${commandsPrivateSC.length} application (/) private commands (SlimeCraft).`);
-			const dataPrivateSC = await rest.put(
-				Routes.applicationGuildCommands(clientId, "778926791339278357"), // Cargar comandos privados
-				{ body: commandsPrivateSC },
+			await deployGuildCommands(
+				GUILDS.SlimeCraft,
+				'SlimeCraft',
+				privateCommandsByGuild[GUILDS.SlimeCraft],
 			);
-			console.log(`Successfully reloaded ${dataPrivateSC.length} application (/) private commands (SlimeCraft).`);
+
+			await deployGuildCommands(
+				GUILDS.MomentoRelax,
+				'MomentoRelax',
+				privateCommandsByGuild[GUILDS.MomentoRelax],
+			);
 		}
 
 	} catch (error) {
