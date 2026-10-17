@@ -4,12 +4,16 @@ import eLog from '../../utils/eLog';
 const AFK_CHANNEL_ID = '886679500551782412';
 const BUILDING_CATEGORY_ID = '612740202796154912';
 
-// Canales con posición fija al final (antes de AFK)
-const FIXED_POSITION_CHANNELS = [
-  { id: '811331463164592188', name: 'Otros' },      // Primero
-  { id: '1438258420942897365', name: 'Estudio' },   // Después de Otros
-  { id: '811326615425908807', name: 'Cine' },       // Después de Estudio
-  { id: '1505343213484113970', name: 'Música' },    // Antes de AFK
+// Canales con posición fija al principio del todo (se colocan en el orden de la lista)
+const TOP_FIXED_CHANNELS = [
+  { id: '811331463164592188', name: 'Otros' },
+];
+
+// Canales con posición fija al final del todo, antes de AFK (se colocan en el orden de la lista)
+const BOTTOM_FIXED_CHANNELS = [
+  { id: '1438258420942897365', name: 'Biblioteca' },
+  { id: '811326615425908807', name: 'Cine' },
+  { id: '1505343213484113970', name: 'Música' },
 ];
 
 module.exports = {
@@ -30,11 +34,13 @@ module.exports = {
       );
       
       const afkChannel = buildingVoiceChannels.get(AFK_CHANNEL_ID);
-      const fixedChannelIds = FIXED_POSITION_CHANNELS.map(fc => fc.id);
+      const fixedChannelIds = [...TOP_FIXED_CHANNELS, ...BOTTOM_FIXED_CHANNELS].map(fc => fc.id);
       const allExcludedIds = [AFK_CHANNEL_ID, ...fixedChannelIds];
       
       const regularChannels = buildingVoiceChannels.filter(channel => !allExcludedIds.includes(channel.id));
-      const fixedChannels = FIXED_POSITION_CHANNELS.map(fc => buildingVoiceChannels.get(fc.id)).filter(c => c);
+      const getFixedChannels = (list) => list.map(fc => buildingVoiceChannels.get(fc.id)).filter(c => c);
+      const topChannels = getFixedChannels(TOP_FIXED_CHANNELS);
+      const bottomChannels = getFixedChannels(BOTTOM_FIXED_CHANNELS);
 
       if (!afkChannel) {
         await interaction.editReply('❌ No se encontró el canal AFK.');
@@ -66,44 +72,16 @@ module.exports = {
         return alphaCompare;
       });
 
-      // Total de canales que reciben numeración (alfabéticos + fijos)
-      const totalChannels = sortedChannels.length + fixedChannels.length;
+      // Orden final: fijos del principio, alfabéticos y fijos del final (AFK se coloca aparte, al final)
+      const orderedChannels = [...topChannels, ...sortedChannels, ...bottomChannels];
+
+      // Total de canales que reciben numeración (fijos + alfabéticos)
+      const totalChannels = orderedChannels.length;
       let currentPosition = 0;
       let skipped = 0;
       let updated = 0;
 
-      // Primero los canales alfabéticos
-      for (let i = 0; i < sortedChannels.length; i++) {
-        const channel = sortedChannels[i];
-        const floorNumber = totalChannels - currentPosition;
-        const nameWithoutParenthesis = channel.name.replace(/\([^)]*\)/, '').trim();
-        const newName = `${nameWithoutParenthesis} (P${floorNumber})`;
-
-        // Verificar si ya está en la posición correcta con el nombre correcto
-        const isNameCorrect = channel.name === newName;
-        const isPositionCorrect = channel.position === currentPosition;
-
-        if (isNameCorrect && isPositionCorrect) {
-          skipped++;
-          currentPosition++;
-          continue;
-        }
-
-        if (!isNameCorrect) {
-          await channel.setName(newName);
-        }
-        if (!isPositionCorrect) {
-          await channel.setPosition(currentPosition);
-        }
-        
-        updated++;
-        currentPosition++;
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      // Luego los canales fijos en orden
-      for (let i = 0; i < fixedChannels.length; i++) {
-        const channel = fixedChannels[i];
+      for (const channel of orderedChannels) {
         const floorNumber = totalChannels - currentPosition;
         const nameWithoutParenthesis = channel.name.replace(/\([^)]*\)/, '').trim();
         const newName = `${nameWithoutParenthesis} (P${floorNumber})`;
