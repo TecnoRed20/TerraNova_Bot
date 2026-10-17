@@ -51,8 +51,8 @@ module.exports = {
     eLog("[MPT] Finalizado")
 
     // Iniciar Discord Price Monitor
-    eLog("[DPM] Iniciando...")
-    iniciarMonitoreoPrecios(client);
-    eLog("[DPM] Finalizado")
+    // eLog("[DPM] Iniciando...")
+    // iniciarMonitoreoPrecios(client);
+    // eLog("[DPM] Finalizado")
   },
 };
